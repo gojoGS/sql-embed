@@ -1,80 +1,92 @@
 package io.github.gojogs.sqlembed.core;
 
-import io.github.gojogs.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.exception.SqlInvalidPathException;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SqlPathNormalizerTest {
 
     /**
-     * Tests the normalize method of the SqlPathNormalizer class.
-     * This method is responsible for normalizing file paths
-     * by replacing backslashes with forward slashes, removing leading slashes,
-     * and ensuring that the resulting path is not empty.
+     * Tests the normalize method in SqlPathNormalizer.
      * <p>
-     * The method throws an SqlInjectionException for invalid paths.
+     * The normalize method is responsible for:
+     * - Replacing backslashes with forward slashes in the given raw path.
+     * - Stripping leading forward slashes.
+     * - Throwing an exception if the raw path is null or results in an empty/blank normalized path.
      */
 
     @Test
-    void normalize_NullPath_ThrowsSqlInjectionException() {
+    void normalizeReplacesBackslashesAndStripsLeadingSlashes() throws NoSuchFieldException {
+        String rawPath = "\\path\\to\\file.sql";
+        Class<?> targetClass = DummyClass.class;
+        Field targetField = DummyClass.class.getDeclaredField("dummyField");
         SqlPathNormalizer normalizer = new SqlPathNormalizer();
 
-        SqlInjectionException exception = assertThrows(
-                SqlInjectionException.class,
-                () -> normalizer.normalize(null, TestClass.class, "testField")
+        String normalized = normalizer.normalize(rawPath, targetClass, targetField);
+
+        assertEquals("path/to/file.sql", normalized);
+    }
+
+    @Test
+    void normalizeThrowsExceptionForNullPath() throws NoSuchFieldException {
+        String rawPath = null;
+        Class<?> targetClass = DummyClass.class;
+        Field targetField = DummyClass.class.getDeclaredField("dummyField");
+        SqlPathNormalizer normalizer = new SqlPathNormalizer();
+
+        SqlInvalidPathException exception = assertThrows(SqlInvalidPathException.class, () ->
+                normalizer.normalize(rawPath, targetClass, targetField)
         );
 
-        assertTrue(exception.getMessage().contains("testField"));
-        assertTrue(exception.getMessage().contains(TestClass.class.getName()));
         assertTrue(exception.getMessage().contains("null"));
+        assertTrue(exception.getMessage().contains("DummyClass"));
+        assertTrue(exception.getMessage().contains("dummyField"));
     }
 
     @Test
-    void normalize_ConvertsBackslashesToForwardSlashes() {
+    void normalizeThrowsExceptionForEmptyPath() throws NoSuchFieldException {
+        String rawPath = "   ";
+        Class<?> targetClass = DummyClass.class;
+        Field targetField = DummyClass.class.getDeclaredField("dummyField");
         SqlPathNormalizer normalizer = new SqlPathNormalizer();
-        String rawPath = "folder\\subfolder\\file.sql";
 
-        String normalizedPath = normalizer.normalize(rawPath, TestClass.class, "testField");
-
-        assertEquals("folder/subfolder/file.sql", normalizedPath);
-    }
-
-    @Test
-    void normalize_RemovesLeadingSlashes() {
-        SqlPathNormalizer normalizer = new SqlPathNormalizer();
-        String rawPath = "/folder/subfolder/file.sql";
-
-        String normalizedPath = normalizer.normalize(rawPath, TestClass.class, "testField");
-
-        assertEquals("folder/subfolder/file.sql", normalizedPath);
-    }
-
-    @Test
-    void normalize_EmptyAfterTrimming_ThrowsSqlInjectionException() {
-        SqlPathNormalizer normalizer = new SqlPathNormalizer();
-        String rawPath = "    ";
-
-        SqlInjectionException exception = assertThrows(
-                SqlInjectionException.class,
-                () -> normalizer.normalize(rawPath, TestClass.class, "testField")
+        SqlInvalidPathException exception = assertThrows(SqlInvalidPathException.class, () ->
+                normalizer.normalize(rawPath, targetClass, targetField)
         );
 
-        assertTrue(exception.getMessage().contains("testField"));
-        assertTrue(exception.getMessage().contains(TestClass.class.getName()));
-        assertTrue(exception.getMessage().contains("    "));
+        assertTrue(exception.getMessage().contains("   "));
+        assertTrue(exception.getMessage().contains("DummyClass"));
+        assertTrue(exception.getMessage().contains("dummyField"));
     }
 
     @Test
-    void normalize_ValidPath_ReturnsNormalizedPath() {
+    void normalizeHandlesMultipleLeadingSlashes() throws NoSuchFieldException {
+        String rawPath = "/////path/to/file.sql";
+        Class<?> targetClass = DummyClass.class;
+        Field targetField = DummyClass.class.getDeclaredField("dummyField");
         SqlPathNormalizer normalizer = new SqlPathNormalizer();
-        String rawPath = "folder/subfolder/file.sql";
 
-        String normalizedPath = normalizer.normalize(rawPath, TestClass.class, "testField");
+        String normalized = normalizer.normalize(rawPath, targetClass, targetField);
 
-        assertEquals("folder/subfolder/file.sql", normalizedPath);
+        assertEquals("path/to/file.sql", normalized);
     }
 
-    private static class TestClass {
+    @Test
+    void normalizeHandlesPathsWithNoModificationsNeeded() throws NoSuchFieldException {
+        String rawPath = "path/with/no/changes.sql";
+        Class<?> targetClass = DummyClass.class;
+        Field targetField = DummyClass.class.getDeclaredField("dummyField");
+        SqlPathNormalizer normalizer = new SqlPathNormalizer();
+
+        String normalized = normalizer.normalize(rawPath, targetClass, targetField);
+
+        assertEquals("path/with/no/changes.sql", normalized);
+    }
+
+    private static class DummyClass {
+        private String dummyField;
     }
 }
