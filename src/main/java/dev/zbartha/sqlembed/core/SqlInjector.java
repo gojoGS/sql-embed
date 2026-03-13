@@ -64,13 +64,23 @@ public final class SqlInjector {
                 String normalizedPath = PATH_NORMALIZER.normalize(annotation.value(), targetClass, field.getName());
                 FIELD_INJECTOR.validateInjectableField(field, targetClass, normalizedPath);
 
-                ClassLoader cacheClassLoader = resolveCacheClassLoader(targetClass);
+                ClassLoader cacheClassLoader = RESOURCE_LOADER.resolveResourceClassLoader(
+                    targetClass,
+                    field.getName(),
+                    normalizedPath
+                );
                 String sqlText = SQL_TEXT_CACHE.getOrLoad(
                     cacheClassLoader,
                     normalizedPath,
                     loaderOptions.getCharset(),
                     loaderOptions.isCacheEnabled(),
-                    () -> RESOURCE_LOADER.loadSql(targetClass, field.getName(), normalizedPath, loaderOptions.getCharset())
+                    () -> RESOURCE_LOADER.loadSql(
+                        cacheClassLoader,
+                        targetClass,
+                        field.getName(),
+                        normalizedPath,
+                        loaderOptions.getCharset()
+                    )
                 );
 
                 String processedSqlText = applyPostProcessing(sqlText, loaderOptions);
@@ -88,14 +98,6 @@ public final class SqlInjector {
         if (firstException != null) {
             throw firstException;
         }
-    }
-
-    private static ClassLoader resolveCacheClassLoader(Class<?> targetClass) {
-        ClassLoader targetClassLoader = targetClass.getClassLoader();
-        if (targetClassLoader != null) {
-            return targetClassLoader;
-        }
-        return Thread.currentThread().getContextClassLoader();
     }
 
     private static String applyPostProcessing(String sqlText, SqlLoaderOptions options) {

@@ -8,7 +8,12 @@ import java.nio.charset.Charset;
 
 final class ClasspathSqlResourceLoader {
     String loadSql(Class<?> targetClass, String fieldName, String sqlPath, Charset charset) {
-        InputStream inputStream = openResourceStream(targetClass, sqlPath);
+        ClassLoader effectiveClassLoader = resolveResourceClassLoader(targetClass, fieldName, sqlPath);
+        return loadSql(effectiveClassLoader, targetClass, fieldName, sqlPath, charset);
+    }
+
+    String loadSql(ClassLoader classLoader, Class<?> targetClass, String fieldName, String sqlPath, Charset charset) {
+        InputStream inputStream = getResourceAsStream(classLoader, sqlPath);
         if (inputStream == null) {
             throw new SqlResourceNotFoundException(targetClass.getName(), fieldName, sqlPath);
         }
@@ -30,19 +35,26 @@ final class ClasspathSqlResourceLoader {
         }
     }
 
-    private InputStream openResourceStream(Class<?> targetClass, String sqlPath) {
+    ClassLoader resolveResourceClassLoader(Class<?> targetClass, String fieldName, String sqlPath) {
         ClassLoader targetClassLoader = targetClass.getClassLoader();
-        InputStream fromTargetClassLoader = getResourceAsStream(targetClassLoader, sqlPath);
-        if (fromTargetClassLoader != null) {
-            return fromTargetClassLoader;
+        if (resourceExists(targetClassLoader, sqlPath)) {
+            return targetClassLoader;
         }
 
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        if (contextClassLoader == targetClassLoader) {
-            return null;
+        if (contextClassLoader != targetClassLoader && resourceExists(contextClassLoader, sqlPath)) {
+            return contextClassLoader;
         }
 
-        return getResourceAsStream(contextClassLoader, sqlPath);
+        throw new SqlResourceNotFoundException(targetClass.getName(), fieldName, sqlPath);
+    }
+
+    private boolean resourceExists(ClassLoader classLoader, String sqlPath) {
+        try (InputStream stream = getResourceAsStream(classLoader, sqlPath)) {
+            return stream != null;
+        } catch (IOException ex) {
+            return false;
+        }
     }
 
     private InputStream getResourceAsStream(ClassLoader classLoader, String sqlPath) {
