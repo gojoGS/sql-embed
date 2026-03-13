@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.exception;
+package io.github.gojogs.sqlembed.exception;
 
 /**
  * Base runtime exception for SQL injection failures.

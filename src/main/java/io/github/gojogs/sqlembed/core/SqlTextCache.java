@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
 import java.nio.charset.Charset;
 import java.util.Objects;

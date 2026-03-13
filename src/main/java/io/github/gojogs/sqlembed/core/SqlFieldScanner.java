@@ -1,6 +1,6 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
-import dev.zbartha.sqlembed.annotation.SqlInject;
+import io.github.gojogs.sqlembed.annotation.SqlInject;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;

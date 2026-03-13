@@ -1,6 +1,6 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
-import dev.zbartha.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.exception.SqlInjectionException;
 
 final class SqlPathNormalizer {
     String normalize(String rawPath, Class<?> targetClass, String fieldName) {

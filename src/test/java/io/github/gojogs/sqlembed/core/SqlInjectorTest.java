@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -13,11 +13,11 @@ import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import dev.zbartha.sqlembed.annotation.SqlInject;
-import dev.zbartha.sqlembed.config.SqlLoaderOptions;
-import dev.zbartha.sqlembed.exception.SqlFieldNotInjectableException;
-import dev.zbartha.sqlembed.exception.SqlFieldTypeMismatchException;
-import dev.zbartha.sqlembed.exception.SqlResourceNotFoundException;
+import io.github.gojogs.sqlembed.annotation.SqlInject;
+import io.github.gojogs.sqlembed.config.SqlLoaderOptions;
+import io.github.gojogs.sqlembed.exception.SqlFieldNotInjectableException;
+import io.github.gojogs.sqlembed.exception.SqlFieldTypeMismatchException;
+import io.github.gojogs.sqlembed.exception.SqlResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

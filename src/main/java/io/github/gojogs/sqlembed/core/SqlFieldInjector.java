@@ -1,8 +1,8 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
-import dev.zbartha.sqlembed.exception.SqlFieldNotInjectableException;
-import dev.zbartha.sqlembed.exception.SqlFieldTypeMismatchException;
-import dev.zbartha.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.exception.SqlFieldNotInjectableException;
+import io.github.gojogs.sqlembed.exception.SqlFieldTypeMismatchException;
+import io.github.gojogs.sqlembed.exception.SqlInjectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 

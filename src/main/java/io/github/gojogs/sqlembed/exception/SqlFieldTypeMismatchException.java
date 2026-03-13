@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.exception;
+package io.github.gojogs.sqlembed.exception;
 
 /**
  * Indicates that an annotated field is not of type {@link String}.

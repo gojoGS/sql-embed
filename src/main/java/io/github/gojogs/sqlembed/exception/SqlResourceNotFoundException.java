@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.exception;
+package io.github.gojogs.sqlembed.exception;
 
 /**
  * Indicates that an annotated SQL classpath resource could not be found.

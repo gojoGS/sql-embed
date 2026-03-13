@@ -1,7 +1,7 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
-import dev.zbartha.sqlembed.exception.SqlInjectionException;
-import dev.zbartha.sqlembed.exception.SqlResourceNotFoundException;
+import io.github.gojogs.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.exception.SqlResourceNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;

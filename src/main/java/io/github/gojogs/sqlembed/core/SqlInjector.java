@@ -1,8 +1,8 @@
-package dev.zbartha.sqlembed.core;
+package io.github.gojogs.sqlembed.core;
 
-import dev.zbartha.sqlembed.annotation.SqlInject;
-import dev.zbartha.sqlembed.config.SqlLoaderOptions;
-import dev.zbartha.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.annotation.SqlInject;
+import io.github.gojogs.sqlembed.config.SqlLoaderOptions;
+import io.github.gojogs.sqlembed.exception.SqlInjectionException;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;

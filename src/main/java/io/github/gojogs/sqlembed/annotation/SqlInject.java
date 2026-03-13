@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.annotation;
+package io.github.gojogs.sqlembed.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

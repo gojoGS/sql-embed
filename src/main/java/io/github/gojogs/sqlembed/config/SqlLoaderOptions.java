@@ -1,4 +1,4 @@
-package dev.zbartha.sqlembed.config;
+package io.github.gojogs.sqlembed.config;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
