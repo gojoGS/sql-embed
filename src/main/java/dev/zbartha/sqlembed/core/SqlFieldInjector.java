@@ -1,0 +1,44 @@
+package dev.zbartha.sqlembed.core;
+
+import dev.zbartha.sqlembed.exception.SqlFieldNotInjectableException;
+import dev.zbartha.sqlembed.exception.SqlFieldTypeMismatchException;
+import dev.zbartha.sqlembed.exception.SqlInjectionException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
+final class SqlFieldInjector {
+    void validateInjectableField(Field field, Class<?> targetClass, String sqlPath) {
+        String className = targetClass.getName();
+        String fieldName = field.getName();
+
+        if (Modifier.isStatic(field.getModifiers())) {
+            throw new SqlFieldNotInjectableException(className, fieldName, sqlPath, "the field is static");
+        }
+
+        if (Modifier.isFinal(field.getModifiers())) {
+            throw new SqlFieldNotInjectableException(className, fieldName, sqlPath, "the field is final");
+        }
+
+        if (field.getType() != String.class) {
+            throw new SqlFieldTypeMismatchException(className, fieldName, sqlPath, field.getType().getName());
+        }
+    }
+
+    void injectSqlText(Object target, Field field, String sqlText, String sqlPath, Class<?> targetClass) {
+        try {
+            field.setAccessible(true);
+            field.set(target, sqlText);
+        } catch (IllegalAccessException | RuntimeException ex) {
+            throw new SqlInjectionException(
+                "Failed SQL injection for field '"
+                    + field.getName()
+                    + "' in '"
+                    + targetClass.getName()
+                    + "': failed assigning SQL text from classpath resource '"
+                    + sqlPath
+                    + "'",
+                ex
+            );
+        }
+    }
+}

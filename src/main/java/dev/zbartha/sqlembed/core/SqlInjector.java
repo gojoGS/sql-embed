@@ -1,0 +1,114 @@
+package dev.zbartha.sqlembed.core;
+
+import dev.zbartha.sqlembed.annotation.SqlInject;
+import dev.zbartha.sqlembed.config.SqlLoaderOptions;
+import dev.zbartha.sqlembed.exception.SqlInjectionException;
+import java.lang.reflect.Field;
+import java.util.regex.Pattern;
+
+/**
+ * Injects SQL text from classpath resources into fields annotated with {@link SqlInject}.
+ *
+ * <p>Supported fields are instance {@link String} fields of any visibility. Annotated fields in the
+ * full class hierarchy are scanned (excluding {@link Object}).
+ */
+public final class SqlInjector {
+    private static final Pattern TRAILING_WHITESPACE_PATTERN = Pattern.compile("(?m)[ \\t]+$");
+
+    private static final SqlFieldScanner FIELD_SCANNER = new SqlFieldScanner();
+    private static final SqlFieldInjector FIELD_INJECTOR = new SqlFieldInjector();
+    private static final SqlPathNormalizer PATH_NORMALIZER = new SqlPathNormalizer();
+    private static final ClasspathSqlResourceLoader RESOURCE_LOADER = new ClasspathSqlResourceLoader();
+    private static final SqlTextCache SQL_TEXT_CACHE = new SqlTextCache();
+
+    private SqlInjector() {
+    }
+
+    /**
+     * Injects SQL using {@link SqlLoaderOptions#defaults()}.
+     *
+     * @param target object instance containing {@link SqlInject} fields
+     * @throws IllegalArgumentException when {@code target} is {@code null}
+     * @throws SqlInjectionException when validation, loading, or assignment fails
+     */
+    public static void inject(Object target) {
+        inject(target, SqlLoaderOptions.defaults());
+    }
+
+    /**
+     * Injects SQL into all fields annotated with {@link SqlInject} on the target class hierarchy.
+     *
+     * <p>For each annotated field, injection performs field validation, SQL path normalization, classpath
+     * loading (target class loader first, then thread context class loader), optional caching, and optional
+     * text post-processing based on the provided options.
+     *
+     * <p>If {@code options} is {@code null}, defaults are used.
+     *
+     * @param target object instance containing {@link SqlInject} fields
+     * @param options loading and post-processing options; {@code null} uses defaults
+     * @throws IllegalArgumentException when {@code target} is {@code null}
+     * @throws SqlInjectionException when validation, loading, or assignment fails
+     */
+    public static void inject(Object target, SqlLoaderOptions options) {
+        if (target == null) {
+            throw new IllegalArgumentException("target must not be null");
+        }
+
+        SqlLoaderOptions loaderOptions = options == null ? SqlLoaderOptions.defaults() : options;
+        SqlInjectionException firstException = null;
+        Class<?> targetClass = target.getClass();
+
+        for (Field field : FIELD_SCANNER.scanAnnotatedFields(targetClass)) {
+            SqlInject annotation = field.getAnnotation(SqlInject.class);
+            try {
+                String normalizedPath = PATH_NORMALIZER.normalize(annotation.value(), targetClass, field.getName());
+                FIELD_INJECTOR.validateInjectableField(field, targetClass, normalizedPath);
+
+                ClassLoader cacheClassLoader = resolveCacheClassLoader(targetClass);
+                String sqlText = SQL_TEXT_CACHE.getOrLoad(
+                    cacheClassLoader,
+                    normalizedPath,
+                    loaderOptions.getCharset(),
+                    loaderOptions.isCacheEnabled(),
+                    () -> RESOURCE_LOADER.loadSql(targetClass, field.getName(), normalizedPath, loaderOptions.getCharset())
+                );
+
+                String processedSqlText = applyPostProcessing(sqlText, loaderOptions);
+                FIELD_INJECTOR.injectSqlText(target, field, processedSqlText, normalizedPath, targetClass);
+            } catch (SqlInjectionException ex) {
+                if (loaderOptions.isFailFast()) {
+                    throw ex;
+                }
+                if (firstException == null) {
+                    firstException = ex;
+                }
+            }
+        }
+
+        if (firstException != null) {
+            throw firstException;
+        }
+    }
+
+    private static ClassLoader resolveCacheClassLoader(Class<?> targetClass) {
+        ClassLoader targetClassLoader = targetClass.getClassLoader();
+        if (targetClassLoader != null) {
+            return targetClassLoader;
+        }
+        return Thread.currentThread().getContextClassLoader();
+    }
+
+    private static String applyPostProcessing(String sqlText, SqlLoaderOptions options) {
+        String result = sqlText;
+
+        if (options.isNormalizeLineEndings()) {
+            result = result.replace("\r\n", "\n").replace("\r", "\n");
+        }
+
+        if (options.isTrimTrailingWhitespace()) {
+            result = TRAILING_WHITESPACE_PATTERN.matcher(result).replaceAll("");
+        }
+
+        return result;
+    }
+}
