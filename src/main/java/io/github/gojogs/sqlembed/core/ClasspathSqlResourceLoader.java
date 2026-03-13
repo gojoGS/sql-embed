@@ -7,11 +7,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 final class ClasspathSqlResourceLoader {
-    String loadSql(Class<?> targetClass, String fieldName, String sqlPath, Charset charset) {
-        ClassLoader effectiveClassLoader = resolveResourceClassLoader(targetClass, fieldName, sqlPath);
-        return loadSql(effectiveClassLoader, targetClass, fieldName, sqlPath, charset);
-    }
-
     String loadSql(ClassLoader classLoader, Class<?> targetClass, String fieldName, String sqlPath, Charset charset) {
         InputStream inputStream = getResourceAsStream(classLoader, sqlPath);
         if (inputStream == null) {
