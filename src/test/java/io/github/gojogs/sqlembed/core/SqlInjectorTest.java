@@ -22,6 +22,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class SqlInjectorTest {
+    @Test
+    void factoryInjection() {
+        BookRepository target = SqlInjector.create(BookRepository::new);
+
+        assertEquals("INSERT INTO books(id, title) VALUES (:id, :title);\n", target.insertBookSql);
+    }
 
     @Test
     void injectsPrivateStringFieldFromClasspathResource() {
