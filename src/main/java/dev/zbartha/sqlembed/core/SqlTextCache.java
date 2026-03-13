@@ -24,6 +24,11 @@ final class SqlTextCache {
         return sqlTextByResource.computeIfAbsent(key, ignored -> sqlLoader.get());
     }
 
+    String getIfPresent(ClassLoader classLoader, String sqlPath, Charset charset) {
+        CacheKey key = new CacheKey(classLoader, sqlPath, charset);
+        return sqlTextByResource.get(key);
+    }
+
     private static final class CacheKey {
         private final ClassLoader classLoader;
         private final String sqlPath;

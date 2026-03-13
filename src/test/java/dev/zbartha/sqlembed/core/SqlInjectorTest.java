@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -164,6 +166,30 @@ class SqlInjectorTest {
         assertEquals("SELECT 'B';\n", second.sql);
     }
 
+    @Test
+    void usesCachedSqlWhenResourceBecomesUnavailable() {
+        CachedContextClassLoaderTarget first = new CachedContextClassLoaderTarget();
+        CachedContextClassLoaderTarget second = new CachedContextClassLoaderTarget();
+        ToggleableResourceClassLoader contextClassLoader = new ToggleableResourceClassLoader(
+            "external/cache_still_available.sql",
+            "SELECT 'cached';\n"
+        );
+
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(contextClassLoader);
+            SqlInjector.inject(first);
+
+            contextClassLoader.setResourceAvailable(false);
+            SqlInjector.inject(second);
+        } finally {
+            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+        }
+
+        assertEquals("SELECT 'cached';\n", first.sql);
+        assertEquals("SELECT 'cached';\n", second.sql);
+    }
+
     private static final class BookRepository {
         @SqlInject("sql/book/insert.sql")
         private String insertBookSql;
@@ -210,5 +236,34 @@ class SqlInjectorTest {
     private static final class ContextClassLoaderTarget {
         @SqlInject("external/context.sql")
         private String sql;
+    }
+
+    private static final class CachedContextClassLoaderTarget {
+        @SqlInject("external/cache_still_available.sql")
+        private String sql;
+    }
+
+    private static final class ToggleableResourceClassLoader extends ClassLoader {
+        private final String resourcePath;
+        private final byte[] resourceBytes;
+        private boolean resourceAvailable = true;
+
+        private ToggleableResourceClassLoader(String resourcePath, String sqlText) {
+            super(null);
+            this.resourcePath = resourcePath;
+            this.resourceBytes = sqlText.getBytes(StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public InputStream getResourceAsStream(String name) {
+            if (!resourceAvailable || !resourcePath.equals(name)) {
+                return null;
+            }
+            return new ByteArrayInputStream(resourceBytes);
+        }
+
+        private void setResourceAvailable(boolean resourceAvailable) {
+            this.resourceAvailable = resourceAvailable;
+        }
     }
 }

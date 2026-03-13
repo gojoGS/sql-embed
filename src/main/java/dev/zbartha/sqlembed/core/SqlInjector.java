@@ -4,6 +4,7 @@ import dev.zbartha.sqlembed.annotation.SqlInject;
 import dev.zbartha.sqlembed.config.SqlLoaderOptions;
 import dev.zbartha.sqlembed.exception.SqlInjectionException;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
 /**
@@ -64,24 +65,29 @@ public final class SqlInjector {
                 String normalizedPath = PATH_NORMALIZER.normalize(annotation.value(), targetClass, field.getName());
                 FIELD_INJECTOR.validateInjectableField(field, targetClass, normalizedPath);
 
-                ClassLoader cacheClassLoader = RESOURCE_LOADER.resolveResourceClassLoader(
-                    targetClass,
-                    field.getName(),
-                    normalizedPath
-                );
-                String sqlText = SQL_TEXT_CACHE.getOrLoad(
-                    cacheClassLoader,
-                    normalizedPath,
-                    loaderOptions.getCharset(),
-                    loaderOptions.isCacheEnabled(),
-                    () -> RESOURCE_LOADER.loadSql(
-                        cacheClassLoader,
+                String sqlText = loaderOptions.isCacheEnabled()
+                    ? getCachedSqlText(targetClass, normalizedPath, loaderOptions.getCharset())
+                    : null;
+                if (sqlText == null) {
+                    ClassLoader resourceClassLoader = RESOURCE_LOADER.resolveResourceClassLoader(
                         targetClass,
                         field.getName(),
+                        normalizedPath
+                    );
+                    sqlText = SQL_TEXT_CACHE.getOrLoad(
+                        resourceClassLoader,
                         normalizedPath,
-                        loaderOptions.getCharset()
-                    )
-                );
+                        loaderOptions.getCharset(),
+                        loaderOptions.isCacheEnabled(),
+                        () -> RESOURCE_LOADER.loadSql(
+                            resourceClassLoader,
+                            targetClass,
+                            field.getName(),
+                            normalizedPath,
+                            loaderOptions.getCharset()
+                        )
+                    );
+                }
 
                 String processedSqlText = applyPostProcessing(sqlText, loaderOptions);
                 FIELD_INJECTOR.injectSqlText(target, field, processedSqlText, normalizedPath, targetClass);
@@ -98,6 +104,21 @@ public final class SqlInjector {
         if (firstException != null) {
             throw firstException;
         }
+    }
+
+    private static String getCachedSqlText(Class<?> targetClass, String normalizedPath, Charset charset) {
+        ClassLoader targetClassLoader = targetClass.getClassLoader();
+        String cachedSqlText = SQL_TEXT_CACHE.getIfPresent(targetClassLoader, normalizedPath, charset);
+        if (cachedSqlText != null) {
+            return cachedSqlText;
+        }
+
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader == targetClassLoader) {
+            return null;
+        }
+
+        return SQL_TEXT_CACHE.getIfPresent(contextClassLoader, normalizedPath, charset);
     }
 
     private static String applyPostProcessing(String sqlText, SqlLoaderOptions options) {
