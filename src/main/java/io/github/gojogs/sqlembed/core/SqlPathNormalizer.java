@@ -1,11 +1,13 @@
 package io.github.gojogs.sqlembed.core;
 
-import io.github.gojogs.sqlembed.exception.SqlInjectionException;
+import io.github.gojogs.sqlembed.exception.SqlInvalidPathException;
+
+import java.lang.reflect.Field;
 
 final class SqlPathNormalizer {
-    String normalize(String rawPath, Class<?> targetClass, String fieldName) {
+    String normalize(String rawPath, Class<?> targetClass, Field field) {
         if (rawPath == null) {
-            throw invalidPathException(targetClass, fieldName, "null");
+            throw new SqlInvalidPathException(targetClass, field, "null");
         }
 
         String normalizedPath = rawPath.replace('\\', '/');
@@ -14,21 +16,9 @@ final class SqlPathNormalizer {
         }
 
         if (normalizedPath.trim().isEmpty()) {
-            throw invalidPathException(targetClass, fieldName, rawPath);
+            throw new SqlInvalidPathException(targetClass, field, rawPath);
         }
 
         return normalizedPath;
-    }
-
-    private SqlInjectionException invalidPathException(Class<?> targetClass, String fieldName, String sqlPath) {
-        return new SqlInjectionException(
-            "Failed SQL injection for field '"
-                + fieldName
-                + "' in '"
-                + targetClass.getName()
-                + "': invalid SQL path '"
-                + sqlPath
-                + "'"
-        );
     }
 }

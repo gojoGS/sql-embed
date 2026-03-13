@@ -8,19 +8,16 @@ import java.lang.reflect.Modifier;
 
 final class SqlFieldInjector {
     void validateInjectableField(Field field, Class<?> targetClass, String sqlPath) {
-        String className = targetClass.getName();
-        String fieldName = field.getName();
-
         if (Modifier.isStatic(field.getModifiers())) {
-            throw new SqlFieldNotInjectableException(className, fieldName, sqlPath, "the field is static");
+            throw new SqlFieldNotInjectableException(targetClass, field, sqlPath, "the field is static");
         }
 
         if (Modifier.isFinal(field.getModifiers())) {
-            throw new SqlFieldNotInjectableException(className, fieldName, sqlPath, "the field is final");
+            throw new SqlFieldNotInjectableException(targetClass, field, sqlPath, "the field is final");
         }
 
         if (field.getType() != String.class) {
-            throw new SqlFieldTypeMismatchException(className, fieldName, sqlPath, field.getType().getName());
+            throw new SqlFieldTypeMismatchException(targetClass, field, sqlPath);
         }
     }
 

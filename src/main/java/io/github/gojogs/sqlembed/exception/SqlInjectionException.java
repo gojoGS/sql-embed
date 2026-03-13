@@ -9,7 +9,7 @@ public class SqlInjectionException extends RuntimeException {
      *
      * @param message failure description
      */
-    public SqlInjectionException(String message) {
+    protected SqlInjectionException(String message) {
         super(message);
     }
 

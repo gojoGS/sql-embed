@@ -5,6 +5,7 @@ import io.github.gojogs.sqlembed.config.SqlLoaderOptions;
 import io.github.gojogs.sqlembed.exception.SqlInjectionException;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -23,6 +24,26 @@ public final class SqlInjector {
     private static final SqlTextCache SQL_TEXT_CACHE = new SqlTextCache();
 
     private SqlInjector() {
+    }
+
+    /**
+     * Creates and initializes an instance of the specified type using the provided supplier.
+     * The created instance is processed to inject required dependencies or perform actions
+     * as defined by the {@code inject} method.
+     *
+     * @param <T> the type of the object to be created
+     * @param supplier the supplier responsible for providing the instance of type {@code T};
+     *                 must not be {@code null}
+     * @return the initialized instance of type {@code T}
+     * @throws NullPointerException if the {@code supplier} is {@code null}
+     * @throws IllegalArgumentException if the injected instance violates injection invariants
+     * @throws SqlInjectionException if the injection process fails due to validation, loading,
+     *                                or assignment issues
+     */
+    public static <T> T create(Supplier<T> supplier) {
+        T target = supplier.get();
+        inject(target);
+        return target;
     }
 
     /**

@@ -10,7 +10,7 @@ final class ClasspathSqlResourceLoader {
     String loadSql(ClassLoader classLoader, Class<?> targetClass, String fieldName, String sqlPath, Charset charset) {
         InputStream inputStream = getResourceAsStream(classLoader, sqlPath);
         if (inputStream == null) {
-            throw new SqlResourceNotFoundException(targetClass.getName(), fieldName, sqlPath);
+            throw new SqlResourceNotFoundException(targetClass, fieldName, sqlPath);
         }
 
         try (InputStream resource = inputStream) {
@@ -41,7 +41,7 @@ final class ClasspathSqlResourceLoader {
             return contextClassLoader;
         }
 
-        throw new SqlResourceNotFoundException(targetClass.getName(), fieldName, sqlPath);
+        throw new SqlResourceNotFoundException(targetClass, fieldName, sqlPath);
     }
 
     private boolean resourceExists(ClassLoader classLoader, String sqlPath) {

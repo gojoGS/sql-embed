@@ -11,12 +11,12 @@ public final class SqlResourceNotFoundException extends SqlInjectionException {
      * @param fieldName annotated field name
      * @param sqlPath normalized SQL classpath resource path
      */
-    public SqlResourceNotFoundException(String className, String fieldName, String sqlPath) {
+    public SqlResourceNotFoundException(Class<?> className, String fieldName, String sqlPath) {
         super(
             "Failed SQL injection for field '"
                 + fieldName
                 + "' in '"
-                + className
+                + className.getName()
                 + "': classpath resource '"
                 + sqlPath
                 + "' not found"
