@@ -83,7 +83,7 @@ public final class SqlInjector {
         for (Field field : FIELD_SCANNER.scanAnnotatedFields(targetClass)) {
             SqlInject annotation = field.getAnnotation(SqlInject.class);
             try {
-                String normalizedPath = PATH_NORMALIZER.normalize(annotation.value(), targetClass, field.getName());
+                String normalizedPath = PATH_NORMALIZER.normalize(annotation.value(), targetClass, field);
                 FIELD_INJECTOR.validateInjectableField(field, targetClass, normalizedPath);
 
                 String sqlText = loaderOptions.isCacheEnabled()
