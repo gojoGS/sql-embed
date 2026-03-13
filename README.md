@@ -26,10 +26,10 @@ final class BookRepository {
     }
 }
 
-BookRepository repository = new BookRepository();
-SqlInjector.
-
-inject(repository);
+void foo() {
+    BookRepository repository = new BookRepository();
+    SqlInjector.inject(repository);   
+}
 ```
 
 ## API
